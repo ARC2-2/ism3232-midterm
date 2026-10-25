@@ -31,3 +31,13 @@ def calculate_quote(daily_rate: float, days: int, contractor: bool = False) -> f
     if discounted_cost < DAMAGE_WAIVER_THRESHOLD:
         return discounted_cost + DAMAGE_WAIVER_FEE
     return discounted_cost
+
+
+def requires_deposit(quote: float) -> bool:
+    """Returns true when the quote requires a deposit."""
+    return quote >= DEPOSIT_THRESHOLD
+
+
+def needs_inspection(days: int, quote: float) -> bool:
+    """Returns true when the rental needs a pickup inspection."""
+    return days >= INSPECTION_DAYS and quote > INSPECTION_QUOTE_THRESHOLD
