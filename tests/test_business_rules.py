@@ -1,9 +1,12 @@
 from business_rules import (
     calculate_quote,
     calculate_rental_cost,
+    format_rental_line,
     get_rental_discount,
+    largest_rental,
     needs_inspection,
     requires_deposit,
+    total_quoted,
 )
 
 
@@ -76,3 +79,48 @@ def test_inspection_quote_boundary_at_limit():
 def test_inspection_quote_boundary_over_limit():
     # Hold days valid; one cent above 800 triggers inspection
     assert needs_inspection(6, 800.01) is True
+
+
+def test_format_rental_line_all_no():
+    line = format_rental_line("Alvarez", 145.0, False, False)
+    assert line == "Alvarez: $145.00 | deposit: no | inspection: no"
+
+
+def test_format_rental_line_all_yes():
+    line = format_rental_line("Eastman", 1344.0, True, True)
+    assert line == "Eastman: $1344.00 | deposit: yes | inspection: yes"
+
+
+def test_total_quoted_short_list():
+    sample = [
+        {"customer": "A", "daily_rate": 60.0, "days": 2, "contractor": False},
+        {"customer": "B", "daily_rate": 60.0, "days": 2, "contractor": True},
+    ]
+    # Alvarez (145.00) + Brennan (133.00) = 278.00
+    assert round(total_quoted(sample), 2) == 278.00
+
+
+def test_largest_rental_empty_list():
+    assert largest_rental([]) == ""
+
+
+def test_largest_rental_single_order():
+    sample = [{"customer": "Solo", "daily_rate": 50.0, "days": 1, "contractor": False}]
+    assert largest_rental(sample) == "Solo"
+
+
+def test_largest_rental_preserves_first_on_tie():
+    sample = [
+        {"customer": "First", "daily_rate": 60.0, "days": 2, "contractor": False},
+        {"customer": "Second", "daily_rate": 60.0, "days": 2, "contractor": False},
+    ]
+    assert largest_rental(sample) == "First"
+
+
+def test_calculate_quote_contractor_changes_total():
+    # 2 days at 60/day. Non-contractor: 120 + 25 fee = 145.00.
+    # Contractor gets 10% off: 120 * 0.9 = 108 + 25 fee = 133.00.
+    standard = calculate_quote(60.0, 2, contractor=False)
+    contractor = calculate_quote(60.0, 2, contractor=True)
+    assert standard != contractor
+    assert round(contractor, 2) == 133.00

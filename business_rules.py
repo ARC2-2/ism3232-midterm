@@ -41,3 +41,42 @@ def requires_deposit(quote: float) -> bool:
 def needs_inspection(days: int, quote: float) -> bool:
     """Returns true when the rental needs a pickup inspection."""
     return days >= INSPECTION_DAYS and quote > INSPECTION_QUOTE_THRESHOLD
+
+
+def total_quoted(rentals: list) -> float:
+    """Returns the sum of quotes for all rentals in the list."""
+    total = 0.0
+    for rental in rentals:
+        total += calculate_quote(
+            rental["daily_rate"],
+            rental["days"],
+            rental.get("contractor", False),
+        )
+    return total
+
+
+def largest_rental(rentals: list) -> str:
+    """Returns the customer of the rental with the largest quote."""
+    if not rentals:
+        return ""
+    largest_customer = ""
+    largest_amount = -1.0
+    for rental in rentals:
+        quote = calculate_quote(
+            rental["daily_rate"],
+            rental["days"],
+            rental.get("contractor", False),
+        )
+        if quote > largest_amount:
+            largest_amount = quote
+            largest_customer = rental["customer"]
+    return largest_customer
+
+
+def format_rental_line(
+    customer: str, quote: float, deposit: bool, inspection: bool
+) -> str:
+    """Returns one formatted line for the rental report."""
+    deposit_str = "yes" if deposit else "no"
+    inspection_str = "yes" if inspection else "no"
+    return f"{customer}: ${quote:.2f} | deposit: {deposit_str} | inspection: {inspection_str}"
